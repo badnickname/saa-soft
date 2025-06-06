@@ -31,6 +31,7 @@ function add() {
 
 function remove(id: number) {
   store.accounts = store.accounts.filter(x => x.id !== id);
+  localStorage.setItem('accounts', JSON.stringify(store.accounts));
 }
 
 function save(account: Account) {
