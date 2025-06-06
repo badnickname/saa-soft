@@ -7,6 +7,14 @@ const store = useStore();
 
 const counter = ref(1);
 
+onMounted(() => {
+
+  const d = localStorage.getItem('accounts');
+  if (!d) return;
+  store.accounts = JSON.parse(d);
+
+})
+
 const created = ref<Account[]>([]);
 const data = computed(() => [...store.accounts.map(x => ({...x, labels: x.labels.map(y => y.text).join('; ')})), ...created.value])
 
@@ -33,6 +41,7 @@ function save(account: Account) {
     store.accounts.push({...account, labels: account.labels.split('; ').map(y => ({ text: y})) });
   }
   created.value = created.value.filter(x => x.id !== account.id);
+  localStorage.setItem('accounts', JSON.stringify(store.accounts));
 }
 </script>
 
