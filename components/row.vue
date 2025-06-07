@@ -9,11 +9,6 @@ const emit = defineEmits(['delete', 'save'])
 
 const options: Account['type'][] = ['LDAP', 'Локальная'];
 
-function isValid(account: Account) {
-  if (account.labels.length > 50) return false;
-  return /^((\w*); )*(\w*)$/.test(account.labels);
-}
-
 function isValidLabels(text: string) {
   if (text.length > 50) return false;
   return /^((\w*); )*(\w*)$/.test(text);
@@ -40,9 +35,8 @@ async function next(i: number) {
 async function onBlur(i: number) {
   focused.value[i] = true;
   await nextTick();
-  if (isValid(props.account) && (isPasswordValid(props.account.password) || props.account.type === 'Локальная') && isPasswordValid(props.account.login)) {
-    emit('save', {...props.account, password: props.account.type === 'LDAP' ? props.account.password : ''});
-  }
+  props.account.password = props.account.type === 'LDAP' ? props.account.password : '';
+  emit('save', props.account);
 }
 
 const td = [

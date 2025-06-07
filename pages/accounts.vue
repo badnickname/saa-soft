@@ -8,19 +8,28 @@ const store = useStore();
 const counter = ref(1);
 
 onMounted(() => {
-
+  counter.value = Number.parseInt(localStorage.getItem('counter') ?? '1');
   const d = localStorage.getItem('accounts');
   if (!d) return;
   store.accounts = JSON.parse(d);
-
+  data.value = store.accounts.map(x => ({...x, labels: x.labels.map(y => y.text).join('; ')}));
 })
 
-const created = ref<Account[]>([]);
-const data = computed(() => [...store.accounts.map(x => ({...x, labels: x.labels.map(y => y.text).join('; ')})), ...created.value])
+const data = ref<Account[]>([]);
+
+function isValid(account: Account) {
+  if (account.labels.length > 50) return false;
+  if (account.login.length > 100 || account.login.length < 1) return false;
+  if (account.type === 'LDAP' && (account.password.length > 100 || account.password.length < 1)) return false;
+  return /^((\w*); )*(\w*)$/.test(account.labels);
+}
+
+const validAccounts = computed(() => data.value.filter(x => isValid(x)).map(x => ({...x, labels: x.labels.split('; ').map(y => ({ text: y})) })));
 
 function add() {
   store.counter += 1;
-  created.value.push({
+  localStorage.setItem('counter', String(store.counter));
+  data.value.push({
     id: store.counter,
     labels: '',
     type: 'LDAP',
@@ -30,18 +39,13 @@ function add() {
 }
 
 function remove(id: number) {
-  store.accounts = store.accounts.filter(x => x.id !== id);
+  data.value = data.value.filter(x => x.id !== id);
+  store.accounts = validAccounts.value;
   localStorage.setItem('accounts', JSON.stringify(store.accounts));
 }
 
 function save(account: Account) {
-  const exist = store.accounts.find(x => x.id === account.id);
-  if (exist) {
-    Object.assign(exist, {...account, labels: account.labels.split('; ').map(y => ({ text: y})) });
-  } else {
-    store.accounts.push({...account, labels: account.labels.split('; ').map(y => ({ text: y})) });
-  }
-  created.value = created.value.filter(x => x.id !== account.id);
+  store.accounts = validAccounts.value;
   localStorage.setItem('accounts', JSON.stringify(store.accounts));
 }
 </script>
